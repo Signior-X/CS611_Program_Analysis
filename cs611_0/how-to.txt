@@ -1,0 +1,18 @@
+How to run Soot in this directory?
+==================================
+
+1. Compile the testcase:
+    javac Test.java
+
+2. Execute (tested with Java 13.0.1):
+    java -cp soot-cs611.jar soot.Main -cp . -pp -f J Test
+
+3. Observe the jimple file(s) generated in "sootOutput/".
+
+Note: If you define multiple classes in "Test.java", say "class A", change the above to:
+    java -cp soot-cs611.jar soot.Main -cp . -pp -f J -main-class Test Test A
+        (where the Test class defines the main method)
+    
+
+To see the class file, and try to understand it
+javap -c A Test.class

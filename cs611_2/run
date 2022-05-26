@@ -1,0 +1,6 @@
+#!/bin/bash
+
+rm *.class
+javac -g:vars $1.java
+javac -cp soot-cs611.jar:. PA2.java
+java -cp soot-cs611.jar:. PA2 $1

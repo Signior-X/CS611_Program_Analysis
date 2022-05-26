@@ -1,0 +1,8 @@
+#!/bin/bash
+
+rm *.class
+javac -g:vars $1.java
+javac -cp soot-cs611.jar:. PA3.java
+java -cp soot-cs611.jar:. PA3 $1
+dot -Tsvg input.dot > $1.svg
+eog $1.svg

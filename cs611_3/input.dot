@@ -1,0 +1,55 @@
+digraph G {
+"i3 = 0" [color="red"];
+"i4 = 0" [color="red"];
+"i5 = 1" [color="red"];
+"i6 = 2" [color="red"];
+"i8 = 4" [color="red"];
+"$r4 = new TA3" [color="red"];
+"specialinvoke $r4.<TA3: void <init>()>()" [color="red"];
+"r5 = $r4" [color="red"];
+"if i4 >= 11 goto $r6 = <java.lang.System: java.io.PrintStream out>" [color="red"];
+"i3 = i3 + i4" [color="red"];
+"i4 = i4 + 1" [color="red"];
+"i5 = i5 + i4" [color="red"];
+"i6 = i6 + i4" [color="red"];
+"i8 = i8 + i3" [color="red"];
+"$i0 = i5 + i6" [color="red"];
+"$i1 = $i0 + i8" [color="red"];
+"r5.<TA3: int f> = $i1" [color="red"];
+"$i2 = r5.<TA3: int f>" [color="red"];
+"staticinvoke <Slice: void slicingCriteria(int)>($i2)" [color="red"];
+"r8 := @parameter0: java.lang.String[]" -> "i3 = 0"
+"i3 = 0" -> "i4 = 0"
+"i4 = 0" -> "i5 = 1"
+"i5 = 1" -> "i6 = 2"
+"i6 = 2" -> "i7 = 3"
+"i7 = 3" -> "i8 = 4"
+"i8 = 4" -> "$r0 = new TA3"
+"$r0 = new TA3" -> "specialinvoke $r0.<TA3: void <init>()>()"
+"specialinvoke $r0.<TA3: void <init>()>()" -> "r1 = $r0"
+"r1 = $r0" -> "$r2 = new TA3"
+"$r2 = new TA3" -> "specialinvoke $r2.<TA3: void <init>()>()"
+"specialinvoke $r2.<TA3: void <init>()>()" -> "r3 = $r2"
+"r3 = $r2" -> "$r4 = new TA3"
+"$r4 = new TA3" -> "specialinvoke $r4.<TA3: void <init>()>()"
+"specialinvoke $r4.<TA3: void <init>()>()" -> "r5 = $r4"
+"r5 = $r4" -> "if i4 >= 11 goto $r6 = <java.lang.System: java.io.PrintStream out>"
+"if i4 >= 11 goto $r6 = <java.lang.System: java.io.PrintStream out>" -> "i3 = i3 + i4"
+"if i4 >= 11 goto $r6 = <java.lang.System: java.io.PrintStream out>" -> "$r6 = <java.lang.System: java.io.PrintStream out>"
+"i3 = i3 + i4" -> "i4 = i4 + 1"
+"$r6 = <java.lang.System: java.io.PrintStream out>" -> "virtualinvoke $r6.<java.io.PrintStream: void print(int)>(i3)"
+"i4 = i4 + 1" -> "i5 = i5 + i4"
+"virtualinvoke $r6.<java.io.PrintStream: void print(int)>(i3)" -> "$r7 = <java.lang.System: java.io.PrintStream out>"
+"i5 = i5 + i4" -> "i6 = i6 + i4"
+"$r7 = <java.lang.System: java.io.PrintStream out>" -> "virtualinvoke $r7.<java.io.PrintStream: void print(int)>(i4)"
+"i6 = i6 + i4" -> "i7 = i7 + i4"
+"virtualinvoke $r7.<java.io.PrintStream: void print(int)>(i4)" -> "i9 = i8"
+"i7 = i7 + i4" -> "i8 = i8 + i3"
+"i9 = i8" -> "$i0 = i5 + i6"
+"i8 = i8 + i3" -> "if i4 >= 11 goto $r6 = <java.lang.System: java.io.PrintStream out>"
+"$i0 = i5 + i6" -> "$i1 = $i0 + i8"
+"$i1 = $i0 + i8" -> "r5.<TA3: int f> = $i1"
+"r5.<TA3: int f> = $i1" -> "$i2 = r5.<TA3: int f>"
+"$i2 = r5.<TA3: int f>" -> "staticinvoke <Slice: void slicingCriteria(int)>($i2)"
+"staticinvoke <Slice: void slicingCriteria(int)>($i2)" -> "return"
+}
