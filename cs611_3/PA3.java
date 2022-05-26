@@ -15,6 +15,8 @@ public class PA3 {
             "-f", "n",
             "-keep-line-number",
             "-no-bodies-for-excluded",
+            "-p","cg.spark","on",
+            "-p","cg","all-reachable",
             // "-p", "jb", "use-original-names",
             "-main-class", fileName, fileName
         };

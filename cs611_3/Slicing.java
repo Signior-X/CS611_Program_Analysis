@@ -6,13 +6,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import soot.Body;
 import soot.Local;
 import soot.MethodOrMethodContext;
 import soot.PatchingChain;
+import soot.PointsToAnalysis;
+import soot.PointsToSet;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootMethod;
@@ -29,24 +29,26 @@ import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
-// Will there be recursive loops?
-
 public class Slicing extends SceneTransformer {
     static CallGraph cg;
     static UnitGraph cfg;
+    static PointsToAnalysis pt;
 
-    static TreeSet<String> alreadyProcessed;
+    static HashSet<String> alreadyProcessed;
     static HashSet<Unit> finalAns;
 
     @Override
     protected void internalTransform(String arg0, Map<String, String> arg1) {
         // For storing the final answer
 
-        alreadyProcessed = new TreeSet<String>();
+        alreadyProcessed = new HashSet<String>();
         finalAns = new HashSet<Unit>();
 
         // STEP 1: Get the call graph
         cg = Scene.v().getCallGraph();
+
+        // Points to graph
+        pt = Scene.v().getPointsToAnalysis();
 
         Iterator<MethodOrMethodContext> callerEdges = cg.sourceMethods();
 
@@ -74,17 +76,11 @@ public class Slicing extends SceneTransformer {
         List<Value> slicingArgs = new ArrayList<Value>();
 
         for (Unit u : units) {
-            // System.out.println(u.toString());
-
             if (((soot.jimple.Stmt) u).containsInvokeExpr()) {
-                // System.out.println("PRIYAM:\t" + ((soot.jimple.Stmt)
-                // u).getInvokeExpr().getMethod().getDeclaringClass().toString().equals("Slice"));
                 SootMethod invokeMethod = ((soot.jimple.Stmt) u).getInvokeExpr().getMethod();
                 if (invokeMethod.getDeclaringClass().toString().equals("Slice")) {
                     slicingCriteria = u;
-
                     slicingArgs = ((soot.jimple.Stmt) u).getInvokeExpr().getArgs();
-                    // System.out.println("Slicing Args: " + slicingArgs.toString());
                 }
             }
         }
@@ -100,8 +96,7 @@ public class Slicing extends SceneTransformer {
             analyseSlice(slicingCriteria, v);
         }
 
-        // Now after analysing the set, we will make the final output as asked for .dot
-        // file
+        // After analysing the set, we will make the final output as asked for .dot file
         String finalOutputString = "digraph G {\n";
         for (Unit u : units) {
             if (finalAns.contains(u)) {
@@ -109,9 +104,7 @@ public class Slicing extends SceneTransformer {
             }
         }
 
-        // Now add the lines here for the cfg
-        // TODO
-        // May be we will start from the head and keep adding the lines of codes
+        // Now add the lines here for the cfg BFS
         HashSet<Unit> visited = new HashSet<Unit>();
         LinkedList<Unit> queue = new LinkedList<Unit>();
 
@@ -168,7 +161,7 @@ public class Slicing extends SceneTransformer {
         List<ValueBox> usedVars = u.getUseAndDefBoxes();
         for (ValueBox vbx : usedVars) {
             if (vbx.getValue() instanceof Local) {
-                if (vbx.getValue() == var) {
+                if (areAliasOrSame(vbx.getValue(), var)) {
                     toConsider = true;
                 }
             }
@@ -190,58 +183,63 @@ public class Slicing extends SceneTransformer {
             }
         }
 
-        // TODo, add the base also here, not the other parameters however
+        // Added the base also here, not the other parameters however
         // Also add the statements related to this
-        List<ValueBox> usedVars = u.getUseBoxes();
+        addUseBoxes(u, nextVars);
 
-        // System.out.println(usedVars.toString());
-        for (ValueBox vbx : usedVars) {
-            if (vbx.getValue() instanceof Local) {
-                // System.out.println("Is it: " + vbx);
-                nextVars.add(vbx.getValue());
-            }
-        }
-
-        System.out.println("ADDED THIS: " + u.toString() + " : " + nextVars.toString());
+        // System.out.println("ADDED THIS: " + u.toString() + " : " +
+        // nextVars.toString());
     }
 
     private static void addUseBoxes(Unit u, List<Value> nextVars) {
         List<ValueBox> usedVars = u.getUseBoxes();
-        // System.out.println(usedVars.toString());
         for (ValueBox vbx : usedVars) {
             if (vbx.getValue() instanceof Local) {
-                // System.out.println("Is it: " + vbx);
                 nextVars.add(vbx.getValue());
             }
         }
+        // System.out.println("ADDED USE BOX: " + u.toString() + " : " +
+        // nextVars.toString());
+    }
 
-        System.out.println("ADDED USE BOX: " + u.toString() + " : " + nextVars.toString());
+    private static boolean areAliasOrSame(Value v1, Value v2) {
+        if (v1 == v2)
+            return true;
+
+        PointsToSet pts1 = pt.reachingObjects((Local) v1);
+        PointsToSet pts2 = pt.reachingObjects((Local) v2);
+        boolean areAlias = pts1.hasNonEmptyIntersection(pts2);
+        System.out.println("ALIAS: " + v1 + " : " + v2 + " : " + areAlias);
+
+        // TODO alias analysis not successful
+        if (areAlias && v1 != v2) {
+            System.out.println("FOUND ALIAS: " + v1.toString() + " , " + v2.toString());
+        }
+        return areAlias;
     }
 
     private static void analyseSlice(Unit u, Value var) {
-        String key = u.toString() + "__PRIYAM__" + var.toString();
+        String key = u.toString() + "__PRIYAM__" + var.toString() + "__HASH__" + System.identityHashCode(u);
+        System.out.println(key);
 
+        // DFS
         if (alreadyProcessed.contains(key))
             return;
         alreadyProcessed.add(key);
-
-        // System.out.println(u.toString() + " checking for " + var);
-        // Here check for it
 
         // Next recursion after processing this node properly
         List<Value> nextVars = new ArrayList<Value>();
 
         if (((soot.jimple.Stmt) u).containsInvokeExpr()) {
-            System.out.println("CONTAINS INVOKE EXPR: " + key);
 
+            // Only consider if the statement has somewhere the variable
             if (isPartOfExpr(u, var)) {
                 if (u instanceof JAssignStmt) {
-                    System.out.println("ALSO CONTAINS INVOKE EXPR: " + key);
                     // Also an assignment with invoke expr
                     Value lhs = ((JAssignStmt) u).getLeftOp();
 
                     if (lhs instanceof Local) {
-                        if (lhs == var) {
+                        if (areAliasOrSame(lhs, var)) {
                             // x = y.foo(p1, p2)
                             finalAns.add(u);
                             addUseBoxes(u, nextVars);
@@ -289,7 +287,7 @@ public class Slicing extends SceneTransformer {
             Value rhs = ((JAssignStmt) u).getRightOp();
 
             if (lhs instanceof Local) {
-                if (lhs == var) {
+                if (areAliasOrSame(lhs, var)) {
                     // y = b
                     finalAns.add(u);
                     addUseBoxes(u, nextVars);
@@ -301,9 +299,7 @@ public class Slicing extends SceneTransformer {
                 // lhs is not an instance of Local, field reference
                 if (isPartOfExpr(u, var)) {
                     // Add condition for field sensitve one
-
                     if (lhs instanceof JInstanceFieldRef) {
-                        // System.out.println("YES" + key);
                         Value lhsBase = ((JInstanceFieldRef) lhs).getBase();
                         if (lhsBase == var) {
                             // x.f1 = p1, Take x and p1 both
@@ -322,19 +318,20 @@ public class Slicing extends SceneTransformer {
             }
 
         } else if (u instanceof IfStmt) {
-            // System.out.println("if statement: " + key);
+            System.out.println("if statement: " + key);
             if (isPartOfExpr(u, var)) {
                 finalAns.add(u);
-
-                List<ValueBox> usedVars = u.getUseBoxes();
-                for (ValueBox vbx : usedVars) {
-                    if (vbx.getValue() instanceof Local) {
-                        nextVars.add(vbx.getValue());
-                    }
-                }
+                addUseBoxes(u, nextVars);
             }
 
+            // TODO to take if or not!!
+            // if (u instanceof GotoStmt) {
+            //     System.out.println("GOTO STMT: " + key);
+            // }
+            // (((GotoStmt) u).getTarget())
+
             nextVars.add(var);
+            System.out.println("NEXT VARS after if: " + nextVars);
         } else {
             System.out.println("STMTS Left to Process: " + key);
             if (isPartOfExpr(u, var)) {
@@ -344,10 +341,11 @@ public class Slicing extends SceneTransformer {
         }
 
         List<Unit> predsUnits = cfg.getPredsOf(u);
-        for (Value v : nextVars) {
-            for (Unit pu : predsUnits) {
+        for (Unit pu : predsUnits) {
+            for (Value v : nextVars) {
                 analyseSlice(pu, v);
             }
         }
+
     }
 }
