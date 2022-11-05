@@ -13,6 +13,6 @@ Results = The lattice is in such a way, BOTTOM is the most precise with nothing 
 We try to find the depth upto which an object is used or called. This is an inter-procedural static analysis that works by first creating the CFG, control flow graph with considering different function call. It finds the access depth of each parameter of the function.
 First we create the control flow graph, then we perform a dfs on that graph, to find the maximum depth for that specific variable.
 
-### Assignment 3 - Staic Backward Slicing
+### Assignment 3 - Static Backward Slicing
 We slice the program depending on the slicing criteria. It reduces the lines of codes and make the program specific for a function. It helps in finding which lines in the code are actually useful and thus helps in specializing the code.
 We first find the slicing criteria, then we loop backwards in the control flow graph, considering the cycles and all taking care to take all those variables that make an effect in the slicing criteria.
